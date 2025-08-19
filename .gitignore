@@ -4,3 +4,4 @@ reports/memo/*.pdf
 .ipynb_checkpoints/
 __pycache__/
 .env
+.conda
