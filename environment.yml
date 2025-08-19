@@ -1,0 +1,22 @@
+name: yc-pca
+channels: [conda-forge]
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - pyarrow
+  - jupyter
+  - ipykernel
+  - statsmodels
+  - python-dotenv
+  - pip
+  - pip:
+      - fredapi
+      - plotly
+      - nelson-siegel-svensson
+      - black
+      - ruff
+      - pre-commit

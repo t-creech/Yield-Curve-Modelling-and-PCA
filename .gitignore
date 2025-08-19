@@ -1,0 +1,6 @@
+.venv/
+data/
+reports/memo/*.pdf
+.ipynb_checkpoints/
+__pycache__/
+.env
