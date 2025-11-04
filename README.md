@@ -12,7 +12,7 @@ This project aims to model the yield curve and analyze its dynamics using princi
 ## Repository structure  
 
 - `src/` – source code for data preparation, PCA computation and analysis.  
-- `notebooks/` – (if present) interactive notebooks exploring the yield curve data and PCA results.  
+- `notebooks/` – interactive notebooks exploring the yield curve data and PCA results.  
 - `Makefile` – defines tasks for setting up the environment, running analysis, etc.  
 - `environment.yml` / `requirements.txt` – list Python dependencies.  
 
