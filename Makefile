@@ -22,6 +22,10 @@ STAMP := $(STAMP_DIR)/$(ENV_NAME).stamp
 .PHONY: all
 all: processed
 
+# Update data end-to-end
+.PHONY: update-data
+update-data: clean raw processed ## Wipe CSVs and pull latest data end-to-end
+
 # --- Environment management ---
 .PHONY: env
 env: $(STAMP) ## Create or update the conda environment

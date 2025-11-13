@@ -7,6 +7,9 @@ dependencies:
   - scipy
   - scikit-learn
   - matplotlib
+  - seaborn
+  - pandoc
+  - texlive-core
   - pyarrow
   - jupyter
   - ipykernel
