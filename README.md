@@ -7,14 +7,14 @@ This project aims to model the yield curve and analyze its dynamics using princi
 - **Data ingestion & cleaning** – scripts to download and clean yield data.  
 - **PCA implementation** – compute principal components of the yield curve to identify level, slope and curvature factors.  
 - **Visualization & analysis** – notebooks or scripts to visualize the yield curve over time and interpret the PCA factors.  
-- **Makefile & environment management** – reproducible workflow with a `Makefile` and `environment.yml` / `requirements.txt` for creating the development environment.  
+- **Makefile & environment management** – reproducible workflow with a `Makefile` and `environment.yml` for creating the development environment.  
 
 ## Repository structure  
 
 - `src/` – source code for data preparation, PCA computation and analysis.  
 - `notebooks/` – interactive notebooks exploring the yield curve data and PCA results.  
 - `Makefile` – defines tasks for setting up the environment, running analysis, etc.  
-- `environment.yml` / `requirements.txt` – list Python dependencies.  
+- `environment.yml` – list Python dependencies.  
 
 ## Getting started  
 
@@ -28,10 +28,6 @@ This project aims to model the yield curve and analyze its dynamics using princi
    ```bash  
    conda env create -f environment.yml  
    conda activate yield-curve-pca  
-   ```  
-   Or install dependencies via pip:  
-   ```bash  
-   pip install -r requirements.txt  
    ```  
 
 3. Run the analysis (example):  

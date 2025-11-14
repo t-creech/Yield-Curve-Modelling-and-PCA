@@ -20,7 +20,7 @@ STAMP := $(STAMP_DIR)/$(ENV_NAME).stamp
 
 # Default target
 .PHONY: all
-all: processed
+all: raw processed pca
 
 # Update data end-to-end
 .PHONY: update-data
@@ -63,12 +63,16 @@ data/raw/combined_data.csv: src/get_data.py | env
 	@echo ">>> Running get_data.py in env $(ENV_NAME)"
 	$(CONDA_RUN) python src/get_data.py
 
-# Processed data (optional: requires you to add src/clean_data.py)
+# Processed data
 processed: data/processed/cleaned_data.csv ## Build processed dataset
 
 data/processed/cleaned_data.csv: src/clean_data.py data/raw/combined_data.csv | env
 	@echo ">>> Running clean_data.py in env $(ENV_NAME)"
 	$(CONDA_RUN) python src/clean_data.py
+
+# --- Analysis steps ---
+pca: data/processed/cleaned_data_diffs.csv ## Run PCA analysis
+	$(CONDA_RUN) python src/run_pca.py
 
 # --- Utilities ---
 .PHONY: run

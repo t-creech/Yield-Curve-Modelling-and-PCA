@@ -1,0 +1,28 @@
+# --- FRED API ---
+api_key_env: "FRED_API_KEY"   # environment variable to read
+
+# --- Data Range ---
+start_date: "2000-01-01"
+end_date: null              # null → use today's date
+
+# --- Tenor Mapping (in ascending order) ---
+tenors:
+  DGS1MO: "1MO"
+  DGS3MO: "3MO"
+  DGS6MO: "6MO"
+  DGS1:   "1Y"
+  DGS2:   "2Y"
+  DGS3:   "3Y"
+  DGS5:   "5Y"
+  DGS7:   "7Y"
+  DGS10:  "10Y"
+  DGS20:  "20Y"
+  DGS30:  "30Y"
+
+# --- Frequency ---
+frequency: "d"               # daily
+
+# --- Data Directory ---
+data_directory:
+  raw: "data/raw"
+  processed: "data/processed"
