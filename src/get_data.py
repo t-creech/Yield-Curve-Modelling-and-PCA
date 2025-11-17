@@ -32,10 +32,10 @@ def get_safe(url, params, retries=3, timeout=10):
             if attempt == retries - 1:
                 raise
 
-def get_raw_data(id, start_date, tenor, end_date, api_key_name, dir, frequency='d'):
+def get_raw_data(series_id, start_date, tenor, end_date, api_key_name, dir, frequency='d'):
     """Fetches data from the FRED API and saves it to a CSV file.
     Args:
-        id (str): The series ID for the data to fetch.
+        series_id (str): The series ID for the data to fetch.
         start_date (str): The start date for the data in 'YYYY-MM-DD' format.
         tenor (str): The tenor for the data (e.g., '1MO', '3MO', etc.).
         end_date (str): The end date for the data in 'YYYY-MM-DD' format (default is today).
@@ -55,7 +55,7 @@ def get_raw_data(id, start_date, tenor, end_date, api_key_name, dir, frequency='
     params = {
         'api_key': fred_api_key,
         'file_type': 'json',
-        'series_id': id,  # Example series ID for 10-Year Treasury
+        'series_id': series_id,  # Example series ID for 10-Year Treasury
         'frequency': frequency,  # Daily frequency
         'observation_start': start_date,  # Start date for the data
         'observation_end': end_date  # End date for the data

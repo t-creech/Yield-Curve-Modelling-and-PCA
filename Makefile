@@ -72,7 +72,7 @@ data/processed/cleaned_data.csv: src/clean_data.py data/raw/combined_data.csv | 
 
 # --- Analysis steps ---
 pca: data/processed/cleaned_data_diffs.csv ## Run PCA analysis
-	$(CONDA_RUN) python src/run_pca.py
+	$(CONDA_RUN) python src/pca.py
 
 # --- Utilities ---
 .PHONY: run
