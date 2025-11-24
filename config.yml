@@ -22,6 +22,11 @@ tenors:
 # --- Frequency ---
 frequency: "d"               # daily
 
+# --- Simulation Parameters ---
+VAR_order: 1                 # order of the VAR model
+num_simulations: 1000
+simulation_horizon_days: 252  # number of days to simulate (e.g., 252 trading days ~ 1 year)
+
 # --- Data Directory ---
 data_directory:
   raw: "data/raw"

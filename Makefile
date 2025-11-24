@@ -7,6 +7,7 @@
 #   make update-env     # force update the env
 #   make remove-env     # remove the env
 #   make clean          # delete generated data
+#   make help           # show this help message
 #
 # You can override ENV_NAME:  make ENV_NAME=myenv raw
 
@@ -18,13 +19,24 @@ CONDA_RUN := conda run -n $(ENV_NAME)
 STAMP_DIR := .conda
 STAMP := $(STAMP_DIR)/$(ENV_NAME).stamp
 
+# Import config.yml to get data directories (requires yq)
+DATA_RAW := $(shell $(CONDA_RUN) python -c "import yaml; print(yaml.safe_load(open('config.yml'))['data_directory']['raw'])")
+DATA_PROCESSED := $(shell $(CONDA_RUN) python -c "import yaml; print(yaml.safe_load(open('config.yml'))['data_directory']['processed'])")
+DATA_SIM := $(shell $(CONDA_RUN) python -c "import yaml; print(yaml.safe_load(open('config.yml'))['data_directory']['simulations'])")
 # Default target
 .PHONY: all
-all: raw processed pca
+all: raw processed pca simulation
 
 # Update data end-to-end
 .PHONY: update-data
 update-data: clean raw processed ## Wipe CSVs and pull latest data end-to-end
+
+# Update simulation only
+.PHONY: update-sim
+update-sim:
+	@echo ">>> Updating simulation only"
+	@rm -f $(DATA_SIM)/simulated_yield_curves.csv
+	$(MAKE) simulation
 
 # --- Environment management ---
 .PHONY: env
@@ -57,22 +69,32 @@ remove-env: ## Remove the conda env (careful!)
 
 # --- Data pipeline ---
 # Raw data
-raw: data/raw/combined_data.csv ## Build raw dataset
+raw: $(DATA_RAW)/combined_data.csv ## Build raw dataset
 
-data/raw/combined_data.csv: src/get_data.py | env
+$(DATA_RAW)/combined_data.csv: src/get_data.py | env
 	@echo ">>> Running get_data.py in env $(ENV_NAME)"
 	$(CONDA_RUN) python src/get_data.py
 
 # Processed data
-processed: data/processed/cleaned_data.csv ## Build processed dataset
+processed: $(DATA_PROCESSED)/cleaned_data.csv ## Build processed dataset
 
-data/processed/cleaned_data.csv: src/clean_data.py data/raw/combined_data.csv | env
+$(DATA_PROCESSED)/cleaned_data.csv: src/clean_data.py $(DATA_RAW)/combined_data.csv | env
 	@echo ">>> Running clean_data.py in env $(ENV_NAME)"
 	$(CONDA_RUN) python src/clean_data.py
 
 # --- Analysis steps ---
-pca: data/processed/cleaned_data_diffs.csv ## Run PCA analysis
+pca: $(DATA_PROCESSED)/pca_factors.csv ## Run PCA analysis
+
+$(DATA_PROCESSED)/pca_factors.csv $(DATA_PROCESSED)/pca_loadings.csv $(DATA_PROCESSED)/pca_explained_variance.csv: src/pca.py $(DATA_PROCESSED)/cleaned_data_diffs.csv | env
+	@echo ">>> Running pca.py in env $(ENV_NAME)"
 	$(CONDA_RUN) python src/pca.py
+
+# --- Rate Simulation ---
+simulation: $(DATA_SIM)/simulated_yield_curves.csv ## Run rate simulation
+
+$(DATA_SIM)/simulated_yield_curves.csv: src/rate_simulation.py $(DATA_PROCESSED)/cleaned_data.csv $(DATA_PROCESSED)/pca_factors.csv $(DATA_PROCESSED)/pca_loadings.csv | env
+	@echo ">>> Running rate_simulation.py in env $(ENV_NAME)"
+	$(CONDA_RUN) python src/rate_simulation.py
 
 # --- Utilities ---
 .PHONY: run
@@ -82,7 +104,7 @@ run: | env ## Convenience: run get_data.py directly
 .PHONY: clean
 clean: ## Remove generated data
 	@echo ">>> Cleaning data directories"
-	@rm -rf data/raw/*.csv data/processed/*.csv
+	@rm -rf $(DATA_RAW)/*.csv $(DATA_PROCESSED)/*.csv $(DATA_SIM)/*.csv
 
 .PHONY: help
 help: ## Show this help
