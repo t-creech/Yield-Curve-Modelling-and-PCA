@@ -26,3 +26,4 @@ frequency: "d"               # daily
 data_directory:
   raw: "data/raw"
   processed: "data/processed"
+  simulations: "data/simulations"

@@ -32,15 +32,13 @@ def get_safe(url, params, retries=3, timeout=10):
             if attempt == retries - 1:
                 raise
 
-def get_raw_data(series_id, start_date, tenor, end_date, api_key_name, dir, frequency='d'):
-    """Fetches data from the FRED API and saves it to a CSV file.
+def get_raw_data(series_id, start_date, end_date, api_key_name, frequency='d'):
+    """Fetches data from the FRED API.
     Args:
         series_id (str): The series ID for the data to fetch.
         start_date (str): The start date for the data in 'YYYY-MM-DD' format.
-        tenor (str): The tenor for the data (e.g., '1MO', '3MO', etc.).
         end_date (str): The end date for the data in 'YYYY-MM-DD' format (default is today).
         api_key_name (str): The name of the environment variable containing the FRED API key.
-        dir (str): The directory to save the CSV file.
         frequency (str): The frequency of the data ('d' for daily, 'm' for monthly, etc.).
     Returns:
         pd.DataFrame: A DataFrame containing the fetched data.
@@ -74,9 +72,7 @@ def get_raw_data(series_id, start_date, tenor, end_date, api_key_name, dir, freq
     data_df['date'] = pd.to_datetime(data_df['date'], format='%Y-%m-%d')
     data_df = data_df[['date', 'value']]  # Keep only the date and value columns
     data_df = data_df.sort_values("date").drop_duplicates("date")
-    # Save the DataFrame to a CSV file
-    csv_file_path = os.path.join(dir, f"{id}_{tenor}.csv")
-    data_df.to_csv(csv_file_path, index=False)
+
     return data_df 
     
 def fetch_all_data(config):
@@ -96,17 +92,13 @@ def fetch_all_data(config):
     end_date = config['end_date'] or datetime.today().strftime('%Y-%m-%d')
     frequency = config['frequency'].lower()
     api_key_name = config.get('api_key_env', 'FRED_API_KEY')
-    dir = config["data_directory"]["raw"]
-    
-    # Create a DataFrame to hold the combined data with a date index
-    date_range = pd.date_range(start=start_date, end=end_date, freq=frequency)
-    combined_df = pd.DataFrame(date_range, columns=['date'])
+    combined_df = pd.DataFrame()
 
     for series_id in series_ids.keys():
         try:
-            data_df = get_raw_data(series_id, start_date, series_ids[series_id], end_date, api_key_name, dir, frequency)
+            data_df = get_raw_data(series_id, start_date, end_date, api_key_name, frequency)
             data_df.rename(columns={'value': series_ids[series_id]}, inplace=True)
-            combined_df = pd.merge(combined_df, data_df, on='date', how='left')
+            combined_df = pd.merge(combined_df, data_df, on='date', how='outer') if not combined_df.empty else data_df
             print(f"Data for {series_id} ({series_ids[series_id]}) fetched successfully.")
             print(data_df.head())  # Display the first few rows of the DataFrame
         except Exception as e:
@@ -117,7 +109,7 @@ def save_data(df, config):
     """Saves the DataFrame to a CSV file at the specified path.
     Args:
         df (pd.DataFrame): The DataFrame to save.
-        path (str): The file path where the CSV should be saved.
+        config: Configuration dictionary containing paths.
     """
     dir = config["data_directory"]["raw"]
     csv_file_path = os.path.join(dir, "combined_data.csv")

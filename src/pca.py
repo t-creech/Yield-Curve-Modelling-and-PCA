@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import os
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 from config_loader import load_config
 
 def main():
@@ -44,8 +43,7 @@ def run_pca(df: pd.DataFrame, n_components: int = 3):
         loadings (pd.DataFrame): DataFrame containing the loadings for each original variable.
         explained (pd.DataFrame): DataFrame containing the explained variance ratio for each principal component.
     """
-    scaler = StandardScaler()
-    X = scaler.fit_transform(df)
+    X = df.values
 
     pca = PCA(n_components=n_components)
     factors = pca.fit_transform(X)

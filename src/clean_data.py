@@ -35,8 +35,16 @@ def clean_data(config):
         raise ValueError(f"Data does not contain all expected columns: {expected_columns}")
     # Ensure the date column is in datetime format
     data['date'] = pd.to_datetime(data['date'], errors='coerce')
+    # Sort by date and drop duplicate dates
+    data = data.sort_values('date').drop_duplicates('date')
+    # Forward fill missing values within 3 days
+    data = data.ffill(limit=3)
     # Drop rows with NaN values in the data columns
+    n_rows_before = data.shape[0]
     data.dropna(subset=expected_columns[1:], inplace=True)
+    n_rows_after = data.shape[0]
+    print(f"Dropped {n_rows_before - n_rows_after} rows with NaN values.")
+    print(f"Cleaned data has {data.shape[0]} rows and {data.shape[1]} columns after processing.")
     # Reset index for the cleaned DataFrame
     data = data.set_index('date')
     return data
@@ -46,7 +54,7 @@ def compute_yield_changes(df):
     Args:
         df (pd.DataFrame): The DataFrame containing yield data.
     Returns:
-        pd.Series: A Series containing the daily changes in yields.
+        pd.DataFrame: A DataFrame containing the daily changes in yields.
     """
     diffs = df.diff().dropna()
     return diffs
