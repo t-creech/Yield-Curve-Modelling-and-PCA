@@ -5,8 +5,9 @@ import os
 from statsmodels.tsa.api import VAR
 from config_loader import load_config
 
-# Set random seed for reproducibility
-np.random.seed(42)
+config = load_config()
+seed = config["seed"]
+np.random.seed(seed) if seed is not False else None
 
 def main():
     """Main function to read PCA results and simulate yield curves."""

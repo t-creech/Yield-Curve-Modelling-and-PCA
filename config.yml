@@ -5,7 +5,7 @@ api_key_env: "FRED_API_KEY"   # environment variable to read
 start_date: "2000-01-01"
 end_date: null              # null → use today's date
 
-# --- Tenor Mapping (in ascending order) ---
+# --- Tenor Mapping to Pull from FRED (in ascending order) ---
 tenors:
   DGS1MO: "1MO"
   DGS3MO: "3MO"
@@ -26,9 +26,37 @@ frequency: "d"               # daily
 VAR_order: 1                 # order of the VAR model
 num_simulations: 1000
 simulation_horizon_days: 252  # number of days to simulate (e.g., 252 trading days ~ 1 year)
+seed: 42                     # random seed for reproducibility make FALSE to disable
+
+# --- Monte Carlo Risk Parameters ---
+monte_carlo:
+  shock_size_bp: 1.0           # shock size in basis points for KRD calculation
+  evaluation: "2026-07-01"
+
+# --- Bond Parameters ---
+bond:
+  settlement_date: "2026-01-01"
+  maturity_date: "2041-01-01"
+  coupon_rate: 0.05          # 5%
+  frequency: 2               # semi-annual
+  face_value: 1000
+  business_day_convention: "following"
+  day_count_convention: "30/360"
 
 # --- Data Directory ---
 data_directory:
   raw: "data/raw"
   processed: "data/processed"
   simulations: "data/simulations"
+  figures: "figures"
+  reports: "reports"
+
+# --- Visualization Parameters ---
+visualization:
+  histogram_bins: 50
+  dpi: 150
+  save_figures: true
+
+# --- KRD Tenors ---
+krd_tenors: ["1Y", "2Y", "5Y", "10Y", "30Y"]
+

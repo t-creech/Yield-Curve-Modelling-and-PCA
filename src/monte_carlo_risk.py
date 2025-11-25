@@ -2,9 +2,41 @@ from config_loader import load_config
 import numpy as np
 import pandas as pd
 import os
-from key_rate_duration import compute_krd_vector, DEFAULT_KRD_TENORS
+from key_rate_duration import compute_krd_vector, KEY_RATE_TENORS
 from bond_analytics import price_duration_convexity
 
+def main():
+    """Main function to compute Monte Carlo bond analytics."""
+    config = load_config()
+    date = pd.to_datetime(config["monte_carlo"]["evaluation"])
+    settlement_date = pd.to_datetime(config["bond"]["settlement_date"])
+    if settlement_date < date:
+        settlement_date = date
+    maturity_date = pd.to_datetime(config["bond"]["maturity_date"])
+    coupon_rate = config["bond"]["coupon_rate"]
+    frequency = config["bond"]["frequency"]
+    face_value = config["bond"]["face_value"]
+    business_day_convention = config["bond"]["business_day_convention"]
+    day_count_convention = config["bond"]["day_count_convention"]
+    shock_size_bp = config["monte_carlo"]["shock_size_bp"]
+
+    analytics_df = compute_mc_analytics(
+        config,
+        date,
+        settlement_date,
+        maturity_date,
+        coupon_rate,
+        frequency,
+        face_value,
+        business_day_convention,
+        day_count_convention,
+        shock_size_bp
+    )
+    
+    # Save the analytics results
+    save_simulated_analytics(config, analytics_df)
+    
+    print("Monte Carlo bond analytics saved.")
 
 def extract_sim_curve_on_date(sim_data, path_id, date):
     """Extracts the yield curve for a specific date.
@@ -17,7 +49,16 @@ def extract_sim_curve_on_date(sim_data, path_id, date):
     """
 
     if date not in sim_data.index.get_level_values(0):
-        raise ValueError(f"Date {date} not found in both cleaned and simulated yield curves.")
+        print(f"Date {date} not found, searching for closest previous date...")
+        i = 5
+        while i > 0:
+            if date - pd.Timedelta(days=i) in sim_data.index.get_level_values(0):
+                date = date - pd.Timedelta(days=i)
+                print(f"Found closest previous date: {date}")
+                break
+            print(f"Date {date - pd.Timedelta(days=i)} not found, checking earlier...")
+            i -= 1
+        raise ValueError(f"Date {date} not found in simulated yield curves.")
     if path_id not in sim_data.index.get_level_values(1):
         raise ValueError(f"Path ID {path_id} not found in simulated yield curves.")
     
@@ -50,7 +91,7 @@ def compute_mc_analytics(config, date, settlement_date, maturity_date, coupon_ra
     for sim_id in sim_ids:
         curve_df_single = extract_sim_curve_on_date(curve_df, sim_id, date)
         price_duration_convexity_res = price_duration_convexity(curve_df_single, settlement_date, maturity_date, coupon_rate, frequency, face_value, business_day_convention, day_count_convention)
-        krd_vector = compute_krd_vector(curve_df_single, DEFAULT_KRD_TENORS, settlement_date, maturity_date, coupon_rate, frequency, face_value, business_day_convention, day_count_convention, shock_size_bp)
+        krd_vector = compute_krd_vector(curve_df_single, KEY_RATE_TENORS, settlement_date, maturity_date, coupon_rate, frequency, face_value, business_day_convention, day_count_convention, shock_size_bp)
         
         result = {
             "date": date,
@@ -64,4 +105,17 @@ def compute_mc_analytics(config, date, settlement_date, maturity_date, coupon_ra
         results.append(result)
         
     return pd.DataFrame(results)
+
+def save_simulated_analytics(config, analytics_df):
+    """Saves the simulated yield curves to CSV file.
+    Args:
+        config: Configuration dictionary containing paths.
+        analytics_df (pd.DataFrame): DataFrame containing the simulated yield curve analytics.
+    """
+    processed_dir = config["data_directory"]["reports"]
+    os.makedirs(processed_dir, exist_ok=True)
+    analytics_df.to_csv(os.path.join(processed_dir, "simulated_yield_curve_analytics.csv"), index=False)
+    
+if __name__ == "__main__":
+    main()
 

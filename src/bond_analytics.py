@@ -105,7 +105,7 @@ def tenor_to_years(tenor):
         years = int(t[:-1])
         return years
     else:
-        raise ValueError("Unsupported tenor format.")
+        raise ValueError(f"Unsupported tenor format: {tenor}")
 
 def generate_cashflows(settlement_date, maturity_date, coupon_rate, frequency = 2, face_value=100, business_day_convention="following"):
     """Generates cashflows for a bond.
@@ -165,7 +165,7 @@ def discount_factors(cashflow_dates, curve, day_count_convention="ACT/365"):
         else:
             raise ValueError("curve must have a 'date' column or a named date index")
     
-    curve_long = (curve.reset_index().melt(id_vars="date", var_name="tenor", value_name="yield"))
+    curve_long = curve.melt(id_vars="date", var_name="tenor", value_name="yield")
     curve_date = pd.to_datetime(curve_long["date"].iloc[0])    
     curve_long["tenor_length"] = curve_long["tenor"].apply(tenor_to_years)
     curve_long = curve_long.sort_values(by="tenor_length")

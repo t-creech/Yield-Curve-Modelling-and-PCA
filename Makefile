@@ -23,9 +23,29 @@ STAMP := $(STAMP_DIR)/$(ENV_NAME).stamp
 DATA_RAW := $(shell $(CONDA_RUN) python -c "import yaml; print(yaml.safe_load(open('config.yml'))['data_directory']['raw'])")
 DATA_PROCESSED := $(shell $(CONDA_RUN) python -c "import yaml; print(yaml.safe_load(open('config.yml'))['data_directory']['processed'])")
 DATA_SIM := $(shell $(CONDA_RUN) python -c "import yaml; print(yaml.safe_load(open('config.yml'))['data_directory']['simulations'])")
+FIGS := $(shell $(CONDA_RUN) python -c "import yaml; print(yaml.safe_load(open('config.yml'))['data_directory']['figures'])")
+REPORTS := $(shell $(CONDA_RUN) python -c "import yaml; print(yaml.safe_load(open('config.yml'))['data_directory']['reports'])")
+
 # Default target
 .PHONY: all
-all: raw processed pca simulation
+all: raw processed pca simulation mc-risk visualization ## Build full data pipeline and analysis
+
+# Convenience targets (don't rebuild dependencies)
+.PHONY: mc-risk-only visualization-only show-paths
+mc-risk-only: | env ## Run monte_carlo_risk.py without forcing upstream rebuilds
+	@echo ">>> Running monte_carlo_risk.py (no prereq checks)"
+	$(CONDA_RUN) python src/monte_carlo_risk.py
+
+visualization-only: | env ## Run make_visualization.py without forcing upstream rebuilds
+	@echo ">>> Running make_visualization.py (no prereq checks)"
+	$(CONDA_RUN) python src/make_visualization.py
+
+show-paths: ## Print resolved data/report directories from config.yml
+	@echo "DATA_RAW      = $(DATA_RAW)"
+	@echo "DATA_PROCESSED= $(DATA_PROCESSED)"
+	@echo "DATA_SIM      = $(DATA_SIM)"
+	@echo "FIGS          = $(FIGS)"
+	@echo "REPORTS       = $(REPORTS)"
 
 # Update data end-to-end
 .PHONY: update-data
@@ -71,31 +91,45 @@ remove-env: ## Remove the conda env (careful!)
 # Raw data
 raw: $(DATA_RAW)/combined_data.csv ## Build raw dataset
 
-$(DATA_RAW)/combined_data.csv: src/get_data.py | env
+$(DATA_RAW)/combined_data.csv: src/get_data.py config.yml | env
 	@echo ">>> Running get_data.py in env $(ENV_NAME)"
 	$(CONDA_RUN) python src/get_data.py
 
 # Processed data
 processed: $(DATA_PROCESSED)/cleaned_data.csv ## Build processed dataset
 
-$(DATA_PROCESSED)/cleaned_data.csv: src/clean_data.py $(DATA_RAW)/combined_data.csv | env
+$(DATA_PROCESSED)/cleaned_data.csv: src/clean_data.py $(DATA_RAW)/combined_data.csv config.yml | env
 	@echo ">>> Running clean_data.py in env $(ENV_NAME)"
 	$(CONDA_RUN) python src/clean_data.py
 
 # --- Analysis steps ---
 pca: $(DATA_PROCESSED)/pca_factors.csv ## Run PCA analysis
 
-$(DATA_PROCESSED)/pca_factors.csv $(DATA_PROCESSED)/pca_loadings.csv $(DATA_PROCESSED)/pca_explained_variance.csv: src/pca.py $(DATA_PROCESSED)/cleaned_data_diffs.csv | env
+$(DATA_PROCESSED)/pca_factors.csv $(DATA_PROCESSED)/pca_loadings.csv $(DATA_PROCESSED)/pca_explained_variance.csv: src/pca.py $(DATA_PROCESSED)/cleaned_data_diffs.csv config.yml | env
 	@echo ">>> Running pca.py in env $(ENV_NAME)"
 	$(CONDA_RUN) python src/pca.py
 
 # --- Rate Simulation ---
 simulation: $(DATA_SIM)/simulated_yield_curves.csv ## Run rate simulation
 
-$(DATA_SIM)/simulated_yield_curves.csv: src/rate_simulation.py $(DATA_PROCESSED)/cleaned_data.csv $(DATA_PROCESSED)/pca_factors.csv $(DATA_PROCESSED)/pca_loadings.csv | env
+$(DATA_SIM)/simulated_yield_curves.csv: src/rate_simulation.py $(DATA_PROCESSED)/cleaned_data.csv $(DATA_PROCESSED)/pca_factors.csv $(DATA_PROCESSED)/pca_loadings.csv config.yml | env
 	@echo ">>> Running rate_simulation.py in env $(ENV_NAME)"
 	$(CONDA_RUN) python src/rate_simulation.py
 
+# --- Monte Carlo Risk Analytics ---
+mc-risk: $(REPORTS)/simulated_yield_curve_analytics.csv ## Run Monte Carlo risk analytics
+
+$(REPORTS)/simulated_yield_curve_analytics.csv: src/monte_carlo_risk.py $(DATA_SIM)/simulated_yield_curves.csv config.yml | env
+	@echo ">>> Running monte_carlo_risk.py in env $(ENV_NAME)"
+	$(CONDA_RUN) python src/monte_carlo_risk.py
+
+# --- Visualization ---
+visualization: $(FIGS)/mc_price_distribution.png ## Generate visualizations
+
+$(FIGS)/mc_price_distribution.png: src/make_visualization.py $(REPORTS)/simulated_yield_curve_analytics.csv config.yml | env
+	@echo ">>> Running make_visualization.py in env $(ENV_NAME)"
+	$(CONDA_RUN) python src/make_visualization.py
+	
 # --- Utilities ---
 .PHONY: run
 run: | env ## Convenience: run get_data.py directly
@@ -104,7 +138,7 @@ run: | env ## Convenience: run get_data.py directly
 .PHONY: clean
 clean: ## Remove generated data
 	@echo ">>> Cleaning data directories"
-	@rm -rf $(DATA_RAW)/*.csv $(DATA_PROCESSED)/*.csv $(DATA_SIM)/*.csv
+	@rm -rf $(DATA_RAW)/*.csv $(DATA_PROCESSED)/*.csv $(DATA_SIM)/*.csv $(FIGS)/* $(REPORTS)/*
 
 .PHONY: help
 help: ## Show this help

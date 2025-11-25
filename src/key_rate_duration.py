@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy
 from bond_analytics import price_duration_convexity
+from config_loader import load_config
+
+config = load_config()
+KEY_RATE_TENORS = config["krd_tenors"]
 
 def shock_single_tenor(curve, tenor, shock_size_bp):
     """Applies a shock to a single tenor in the yield curve.
@@ -68,9 +72,7 @@ def compute_krd_vector(curve, tenors, settlement_date, maturity_date, coupon_rat
         krd_vector[tenor] = krd
     return krd_vector
 
-DEFAULT_KRD_TENORS = ["1Y", "2Y", "5Y", "10Y", "30Y"]
-
-def prepare_krd_for_plot(krd_vector, tenors=DEFAULT_KRD_TENORS):
+def prepare_krd_for_plot(krd_vector, tenors=KEY_RATE_TENORS):
     """Prepares key rate duration vectors for plotting.
     Args:
         krd_vector (dict): A dictionary where keys are tenors and values are the corresponding key rate durations.
