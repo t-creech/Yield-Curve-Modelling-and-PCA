@@ -117,8 +117,8 @@ def save_simulated_curves(config, simulated_curves):
     """
     processed_dir = config["data_directory"]["simulations"]
     os.makedirs(processed_dir, exist_ok=True)
-    
-    simulated_curves.to_csv(os.path.join(processed_dir, "simulated_yield_curves.csv"))
-    
+    simulated_curves.index.names = ["date", "sim_id"]
+    simulated_curves.to_csv(os.path.join(processed_dir, "simulated_yield_curves.csv"), index=True)
+
 if __name__ == "__main__":
     main()
