@@ -51,14 +51,18 @@ def extract_sim_curve_on_date(sim_data, path_id, date):
     if date not in sim_data.index.get_level_values(0):
         print(f"Date {date} not found, searching for closest previous date...")
         i = 5
+        found = False
         while i > 0:
-            if date - pd.Timedelta(days=i) in sim_data.index.get_level_values(0):
-                date = date - pd.Timedelta(days=i)
+            test_date = date - pd.Timedelta(days=i)
+            if test_date in sim_data.index.get_level_values(0):
+                date = test_date
                 print(f"Found closest previous date: {date}")
+                found = True
                 break
             print(f"Date {date - pd.Timedelta(days=i)} not found, checking earlier...")
             i -= 1
-        raise ValueError(f"Date {date} not found in simulated yield curves.")
+        if not found:
+            raise ValueError(f"Date {date} not found in simulated yield curves.")
     if path_id not in sim_data.index.get_level_values(1):
         raise ValueError(f"Path ID {path_id} not found in simulated yield curves.")
     
